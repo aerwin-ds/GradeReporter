@@ -1,0 +1,6 @@
+pandas
+sqlalchemy
+streamlit
+faker
+bcrypt
+python-dotenv

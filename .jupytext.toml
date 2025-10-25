@@ -1,0 +1,4 @@
+# Pair notebooks with light, reviewable Python scripts.
+default_jupytext_formats = "ipynb,py:percent"
+notebook_metadata_filter = "-all"
+cell_metadata_filter = "-all"
