@@ -1,6 +1,21 @@
-pandas
-sqlalchemy
-streamlit
-faker
-bcrypt
-python-dotenv
+# Core Dependencies
+pandas>=2.0.0
+sqlalchemy>=2.0.0
+streamlit>=1.28.0
+python-dotenv>=1.0.0
+
+# Authentication & Security
+bcrypt>=4.0.0
+
+# Timezone Support
+pytz>=2023.3
+
+# Development & Testing
+faker>=20.0.0
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Code Quality
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.5.0

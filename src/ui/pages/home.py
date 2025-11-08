@@ -1,0 +1,54 @@
+"""
+Home page for the application.
+"""
+import streamlit as st
+from src.core.session import session
+from src.ui.components.navigation import get_current_page
+from config.settings import ROLES
+
+
+def show_home_page():
+    """Render the home page."""
+    user = session.get_current_user()
+
+    if not user:
+        st.warning("Please log in to continue.")
+        return
+
+    # Route to appropriate dashboard based on current page
+    current_page = get_current_page()
+
+    if current_page == 'home':
+        _show_role_dashboard(user['role'])
+    elif current_page == 'student_dashboard':
+        from src.ui.pages.student_dashboard import show_student_dashboard
+        show_student_dashboard()
+    elif current_page == 'parent_dashboard':
+        from src.ui.pages.parent_dashboard import show_parent_dashboard
+        show_parent_dashboard()
+    elif current_page == 'teacher_dashboard':
+        from src.ui.pages.teacher_dashboard import show_teacher_dashboard
+        show_teacher_dashboard()
+    elif current_page == 'admin_dashboard':
+        from src.ui.pages.admin_dashboard import show_admin_dashboard
+        show_admin_dashboard()
+    else:
+        st.info(f"Page '{current_page}' is under construction.")
+
+
+def _show_role_dashboard(role: str):
+    """Show the appropriate dashboard for the user's role."""
+    if role == ROLES['STUDENT']:
+        from src.ui.pages.student_dashboard import show_student_dashboard
+        show_student_dashboard()
+    elif role == ROLES['PARENT']:
+        from src.ui.pages.parent_dashboard import show_parent_dashboard
+        show_parent_dashboard()
+    elif role == ROLES['TEACHER']:
+        from src.ui.pages.teacher_dashboard import show_teacher_dashboard
+        show_teacher_dashboard()
+    elif role == ROLES['ADMIN']:
+        from src.ui.pages.admin_dashboard import show_admin_dashboard
+        show_admin_dashboard()
+    else:
+        st.error("Unknown user role.")

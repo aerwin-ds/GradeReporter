@@ -19,7 +19,7 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Data
+# Data & Databases
 data/
 *.sqlite
 *.db
@@ -28,3 +28,20 @@ data/
 build/
 dist/
 *.egg-info/
+
+# Streamlit
+.streamlit/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Logs
+*.log
