@@ -1,44 +1,237 @@
-# Grade Reporter — Minimal Collaborative Setup
+# Grade Reporter — Modular Architecture
 
-This is a *minimal* starting point so a team of 4 can collaborate **today** using branching + PRs while the code still lives in a single notebook.
+A collaborative grade reporting system built with **Streamlit** and modular Python architecture, designed to scale from 4 to 8+ features.
 
-## What's here
-- `notebooks/GradeReporter_Demo_1.ipynb` — your current Colab notebook
-- `.jupytext.toml` — tells Jupytext to pair the notebook with a `.py` script for readable diffs
-- `requirements.txt` — start list; add to it as you import new libraries
-- `.gitignore` — keeps repos clean
+## 🎯 Current Status
 
-## Team workflow (quick)
-1) **Clone & venv**
+**Phase**: Migrating from notebook to modular architecture
+**Branch**: `feat/dev-environment-refactor`
+
+### Features Implemented (from Notebook)
+1. **Authentication & RBAC** (Autumn Erwin) - Role-based access control
+2. **Announcements System** (Meetika Kanumukula) - Teacher/admin announcements
+3. **Parent Engagement Tools** (Keith) - Parent-teacher communication
+4. **After-Hours Question System** (Jaikishan) - Timezone-aware Q&A
+
+### Future Features (Planned)
+5. Feature 5 (TBD)
+6. Feature 6 (TBD)
+7. Feature 7 (TBD)
+8. Feature 8 (TBD)
+
+## 🚀 Quick Start
+
+**See [QUICKSTART.md](QUICKSTART.md) for a 5-minute setup guide.**
+
+### 1. Environment Setup
 ```bash
-python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
+# Clone and navigate to project
+cd GradeReporter
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+# Install dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
-pip install jupytext
 ```
-2) **Pair the notebook with a .py for code reviews**
-```bash
-jupytext --set-formats ipynb,py:percent notebooks/GradeReporter_Demo_1.ipynb
-# After edits, keep the .py in sync:
-jupytext --sync notebooks/GradeReporter_Demo_1.ipynb
-```
-3) **Branch & PR**
-```bash
-git checkout -b feat/<short-topic>
-git add notebooks/GradeReporter_Demo_1.ipynb notebooks/GradeReporter_Demo_1.py
-git commit -m "feat: <what you changed>"
-git push -u origin feat/<short-topic>
-# Open a Pull Request to main
-```
-4) **Rule of thumb**
-- Never push to `main` directly
-- Always update the paired `.py` (`jupytext --sync`) before committing
-- Keep outputs in the notebook if you need them; reviewers can rely on the `.py` for diffs
 
-## Optional (nice-to-have, still simple)
-- Add branch protections for `main` (1 review required)
-- Enable "Require PRs to be up to date with base branch"
+### 2. Create Test Database
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Create test database with sample data
+python scripts/create_test_db.py
+```
+
+**Test Credentials:** All use password `password`
+- Admin: `admin@example.com`
+- Teacher: `teacher@example.com`
+- Student: `student@example.com`
+- Parent: `parent@example.com`
+
+### 3. Verify Setup
+```bash
+# Run smoke tests
+python scripts/smoke_test.py
+```
+
+### 4. Run Application
+```bash
+streamlit run app.py
+```
+
+Access at: `http://localhost:8501`
+
+### 5. Run Tests
+```bash
+# Run unit tests
+pytest tests/
+
+# Run with coverage
+pytest tests/ --cov=src
+```
+
+## 📁 Project Structure
+
+```
+GradeReporter/
+├── app.py                      # Main Streamlit entry point
+├── config/                     # Configuration management
+│   ├── settings.py            # Centralized settings
+│   └── database.py            # Database connections
+├── src/
+│   ├── core/                  # Shared functionality
+│   │   ├── auth.py           # Authentication
+│   │   ├── rbac.py           # Role-based access
+│   │   ├── session.py        # Session management
+│   │   └── decorators.py     # Auth decorators
+│   ├── features/              # Feature modules
+│   │   ├── authentication/
+│   │   ├── announcements/
+│   │   ├── parent_engagement/
+│   │   ├── after_hours/
+│   │   └── feature_5-8/      # Future features
+│   ├── models/                # Data models
+│   ├── utils/                 # Utilities
+│   └── ui/                    # Streamlit UI
+│       ├── components/        # Reusable components
+│       └── pages/             # Page components
+├── scripts/                   # Database & utility scripts
+├── tests/                     # Test suite
+├── data/                      # Database files (gitignored)
+└── notebooks/                 # Original notebook (reference)
+```
+
+## 🏗️ Architecture
+
+### Three-Layer Pattern
+Each feature follows a clean separation:
+
+1. **Repository Layer** (`repository.py`) - Database access only
+2. **Service Layer** (`service.py`) - Business logic
+3. **UI Layer** (`ui.py`) - Streamlit presentation
+
+### Example Feature Structure
+```
+src/features/feature_name/
+├── __init__.py
+├── repository.py      # Data access
+├── service.py         # Business logic
+└── ui.py             # Streamlit UI
+```
+
+## 👥 Team Collaboration
+
+### Git Workflow
+```bash
+# Create feature branch
+git checkout -b feat/feature-name
+
+# Make changes and commit
+git add .
+git commit -m "feat: description of changes"
+
+# Push and create PR
+git push -u origin feat/feature-name
+```
+
+### Rules
+- ✅ Always work on feature branches
+- ✅ Create PRs for all changes
+- ✅ Require code review before merge
+- ❌ Never push directly to `main`
+
+## 🔧 Development
+
+### Adding a New Feature
+```bash
+# 1. Create feature module
+mkdir -p src/features/feature_name
+touch src/features/feature_name/{__init__.py,service.py,repository.py,ui.py}
+
+# 2. Enable feature in .env
+echo "FEATURE_NEW_FEATURE=True" >> .env
+
+# 3. Add navigation in src/ui/components/navigation.py
+
+# 4. Implement repository → service → UI layers
+
+# 5. Write tests
+touch tests/test_feature_name.py
+```
+
+### Running Tests
+```bash
+pytest tests/
+pytest tests/ --cov=src  # With coverage
+```
+
+### Code Quality
+```bash
+# Format code
+black src/
+
+# Lint
+flake8 src/
+
+# Type check
+mypy src/
+```
+
+## 📚 Documentation
+
+- **[QUICKSTART.md](QUICKSTART.md)** - 5-minute setup guide
+- **[TESTING.md](TESTING.md)** - Comprehensive testing guide
+- **[MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)** - Detailed migration instructions
+- **Feature Documentation** - See individual feature README files (coming soon)
+- **API Documentation** - Generated from docstrings
+
+## 🔑 Key Technologies
+
+- **Frontend**: Streamlit
+- **Database**: SQLite + SQLAlchemy
+- **Authentication**: bcrypt
+- **Testing**: pytest
+- **Code Quality**: black, flake8, mypy
+
+## 🐛 Troubleshooting
+
+### Import Errors
+Run from project root:
+```bash
+cd GradeReporter
+streamlit run app.py
+```
+
+### Database Not Found
+Ensure databases are in `data/` directory:
+```bash
+ls -la data/
+```
+
+### Clear Cache
+```bash
+rm -rf .streamlit/
+```
+
+## 📝 Migration Status
+
+See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for detailed migration progress and instructions.
+
+## 🤝 Team
+
+- **Autumn Erwin** - Authentication & RBAC
+- **Meetika Kanumukula** - Announcements System
+- **Keith** - Parent Engagement Tools
+- **Jaikishan** - After-Hours Question System
+
+## 📄 License
+
+[Add license information]
 
 ---
 
-When you're ready to go beyond the notebook, create `src/` and start moving functions into modules. Until then, this setup lets everyone collaborate without friction.
+**Note**: Original notebook preserved in `notebooks/GradeReporter_Demo_1.ipynb` for reference.
