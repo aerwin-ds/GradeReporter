@@ -32,6 +32,16 @@ def show_home_page():
     elif current_page == 'admin_dashboard':
         from src.ui.pages.admin_dashboard import show_admin_dashboard
         show_admin_dashboard()
+    elif current_page == 'parent_engagement':
+        # Route to appropriate parent engagement page based on role
+        if user['role'] == ROLES['PARENT']:
+            from src.features.parent_engagement.ui import show_contact_teachers_page
+            show_contact_teachers_page()
+        elif user['role'] == ROLES['TEACHER']:
+            from src.features.parent_engagement.ui import show_parent_requests_page
+            show_parent_requests_page()
+        else:
+            st.error("Unauthorized access to parent engagement feature.")
     else:
         st.info(f"Page '{current_page}' is under construction.")
 

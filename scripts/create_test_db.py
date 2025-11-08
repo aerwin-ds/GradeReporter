@@ -146,7 +146,7 @@ def create_main_database():
         )
     """)
 
-    print("✓ Tables created")
+    print("[OK] Tables created")
 
     # Insert sample users
     sample_password = hash_password("password")
@@ -159,36 +159,47 @@ def create_main_database():
     ]
 
     cursor.executemany("INSERT INTO Users (name, email, password_hash, role) VALUES (?, ?, ?, ?)", users)
-    print("✓ Sample users created")
+    print("[OK] Sample users created")
 
     # Insert role-specific data
     cursor.execute("INSERT INTO Students (user_id, grade_level) VALUES (3, 10)")
     cursor.execute("INSERT INTO Teachers (user_id, department) VALUES (2, 'Mathematics')")
     cursor.execute("INSERT INTO Parents (user_id, phone) VALUES (4, '555-0123')")
     cursor.execute("INSERT INTO Parent_Student (parent_id, student_id) VALUES (1, 1)")
-    print("✓ Role-specific data created")
+    print("[OK] Role-specific data created")
 
     # Insert sample course
     cursor.execute("INSERT INTO Courses (course_name, teacher_id) VALUES ('Algebra I', 1)")
-    print("✓ Sample course created")
+    print("[OK] Sample course created")
 
     # Insert sample grade
     cursor.execute("""
         INSERT INTO Grades (student_id, course_id, assignment_name, grade, date_assigned)
         VALUES (1, 1, 'Chapter 1 Quiz', 85.5, '2024-01-15')
     """)
-    print("✓ Sample grade created")
+    print("[OK] Sample grade created")
 
     # Insert sample announcement
     cursor.execute("""
         INSERT INTO Announcements (author_id, role_visibility, title, body)
         VALUES (2, 'All', 'Welcome to GradeReporter', 'This is a test announcement.')
     """)
-    print("✓ Sample announcement created")
+    print("[OK] Sample announcement created")
+
+    # Insert sample engagement requests
+    cursor.execute("""
+        INSERT INTO EngagementRequests (parent_id, teacher_id, student_id, request_type, subject, message, preferred_times, status)
+        VALUES (1, 1, 1, 'message', 'Question about homework', 'I wanted to ask about the homework assigned last week. My child is having trouble understanding problem #5.', NULL, 'pending')
+    """)
+    cursor.execute("""
+        INSERT INTO EngagementRequests (parent_id, teacher_id, student_id, request_type, subject, message, preferred_times, status, teacher_response)
+        VALUES (1, 1, 1, 'meeting', 'Request parent-teacher conference', 'I would like to discuss my child''s progress this semester.', 'Monday 3-5pm or Wednesday after 4pm', 'approved', 'I would be happy to meet with you. Wednesday at 4:30pm works well for me. Looking forward to discussing Jane''s progress!')
+    """)
+    print("[OK] Sample engagement requests created")
 
     conn.commit()
     conn.close()
-    print(f"✅ Main database created successfully at {DB_PATH}")
+    print(f"[SUCCESS] Main database created successfully at {DB_PATH}")
 
 
 def create_after_hours_database():
@@ -241,7 +252,7 @@ def create_after_hours_database():
         )
     """)
 
-    print("✓ After-hours tables created")
+    print("[OK] After-hours tables created")
 
     # Insert sample teacher
     cursor.execute("""
@@ -255,11 +266,11 @@ def create_after_hours_database():
         VALUES ('teacher-1', 1, '09:00', '17:00')
     """)
 
-    print("✓ Sample after-hours data created")
+    print("[OK] Sample after-hours data created")
 
     conn.commit()
     conn.close()
-    print(f"✅ After-hours database created successfully at {AFTER_HOURS_DB_PATH}")
+    print(f"[SUCCESS] After-hours database created successfully at {AFTER_HOURS_DB_PATH}")
 
 
 def print_credentials():
@@ -280,5 +291,5 @@ if __name__ == "__main__":
     create_main_database()
     create_after_hours_database()
     print_credentials()
-    print("\n✅ All databases created successfully!")
+    print("\n[SUCCESS] All databases created successfully!")
     print("\nNext step: Run 'streamlit run app.py' to test the application")
