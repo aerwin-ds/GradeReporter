@@ -13,6 +13,9 @@ pytz>=2023.3
 # AI/LLM Integration
 google-generativeai>=0.8.0
 google-auth>=2.0.0
+langchain>=1.0.0
+langchain-google-genai>=3.0.0
+langchain-core>=1.0.0
 
 # Development & Testing
 faker>=20.0.0
