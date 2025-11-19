@@ -95,8 +95,7 @@ class AIProgressReportRepository:
                     g.grade,
                     g.assignment_name,
                     g.date_assigned,
-                    c.course_name,
-                    g.comments
+                    c.course_name
                 FROM Grades g
                 JOIN Courses c ON g.course_id = c.course_id
                 WHERE g.student_id = ? AND g.course_id = ?
@@ -109,8 +108,7 @@ class AIProgressReportRepository:
                     g.grade,
                     g.assignment_name,
                     g.date_assigned,
-                    c.course_name,
-                    g.comments
+                    c.course_name
                 FROM Grades g
                 JOIN Courses c ON g.course_id = c.course_id
                 WHERE g.student_id = ?
@@ -119,7 +117,10 @@ class AIProgressReportRepository:
             params = (student_id,)
 
         with db_manager.get_connection() as conn:
-            return pd.read_sql_query(query, conn, params=params)
+            df = pd.read_sql_query(query, conn, params=params)
+            # Add empty comments column for compatibility
+            df['comments'] = None
+            return df
 
     def _calculate_trend(self, grades_df: pd.DataFrame) -> Dict[str, Any]:
         """Calculate grade trend (improving, stable, declining)."""

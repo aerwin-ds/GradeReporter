@@ -5,6 +5,7 @@ import streamlit as st
 from src.core.decorators import require_role
 from src.core.rbac import RBACFilter
 from src.core.session import session
+from src.features.ai_progress_reports.ui import show_progress_report_widget
 
 
 @require_role('student')
@@ -37,6 +38,11 @@ def show_student_dashboard():
         st.metric("Enrolled Courses", total_courses)
 
     st.markdown("---")
+
+    # AI Progress Report (if configured)
+    if user.get('student_id'):
+        show_progress_report_widget(student_id=user['student_id'])
+        st.markdown("---")
 
     # Grades table
     st.markdown("### 📊 Recent Grades")
