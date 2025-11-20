@@ -14,6 +14,26 @@ def show_student_dashboard():
 
     st.markdown(f'<h1 class="main-header">Welcome, {user["name"]}!</h1>', unsafe_allow_html=True)
 
+    # Show low grade alerts if any
+    from src.features.feature_8.service import LowGradeAlertService
+    alert_service = LowGradeAlertService()
+    student_id = user.get("student_id")
+
+    if student_id:
+        alerts = alert_service.get_student_alerts(student_id)
+        if alerts:
+            st.warning(f"You have {len(alerts)} grade alert(s) that need your attention!")
+            for alert in alerts:
+                with st.container(border=True):
+                    col1, col2 = st.columns([0.85, 0.15])
+                    with col1:
+                        st.markdown(f"**{alert['alert_type'].replace('_', ' ').title()}** in {alert['course_name']} ({alert['current_grade']:.1f}%)")
+                        st.caption(alert['alert_message'][:100] + "...")
+                    with col2:
+                        if st.button("View", key=f"view_alert_{alert['alert_id']}"):
+                            st.session_state.current_page = 'low_grade_alerts'
+                            st.rerun()
+
     # Get student's grades using RBAC filtering
     grades_df = RBACFilter.get_authorized_grades()
     courses_df = RBACFilter.get_authorized_courses()
@@ -38,30 +58,7 @@ def show_student_dashboard():
 
     st.markdown("---")
 
-    # Grades table
-    st.markdown("### 📊 Recent Grades")
-
-    if not grades_df.empty:
-        # Format the dataframe for display
-        display_df = grades_df[['date_assigned', 'course_name', 'assignment_name', 'grade', 'teacher_name']].copy()
-        display_df.columns = ['Date', 'Course', 'Assignment', 'Grade', 'Teacher']
-        display_df['Grade'] = display_df['Grade'].apply(lambda x: f"{x:.1f}%")
-
-        st.dataframe(
-            display_df,
-            use_container_width=True,
-            hide_index=True
-        )
-
-        # Grade distribution chart
-        st.markdown("### 📈 Grade Distribution")
-        st.bar_chart(grades_df.set_index('assignment_name')['grade'])
-    else:
-        st.info("No grades available yet.")
-
-    st.markdown("---")
-
-    # Courses
+    # Courses with per-assignment comparisons
     st.markdown("### 📚 My Courses")
 
     if not courses_df.empty:
@@ -73,7 +70,91 @@ def show_student_dashboard():
                 course_grades = grades_df[grades_df['course_name'] == course['course_name']]
                 if not course_grades.empty:
                     st.write(f"**Assignments:** {len(course_grades)}")
-                    st.write(f"**Average:** {course_grades['grade'].mean():.1f}%")
+                    st.write(f"**Your Average:** {course_grades['grade'].mean():.1f}%")
+
+                    st.markdown("---")
+
+                    # Get all grades for this course (from all students) for comparison
+                    import sqlite3
+                    from config.database import db_manager
+
+                    all_course_grades = []
+                    with db_manager.get_connection() as conn:
+                        conn.row_factory = sqlite3.Row
+                        cursor = conn.cursor()
+
+                        # Fetch all grades for this course
+                        all_course_grades = cursor.execute(
+                            """
+                            SELECT g.assignment_name, g.grade
+                            FROM grades g
+                            JOIN courses c ON g.course_id = c.course_id
+                            WHERE c.course_name = ?
+                            ORDER BY g.assignment_name
+                            """,
+                            (course['course_name'],)
+                        ).fetchall()
+
+                    if all_course_grades:
+                        st.markdown("**Assignment Comparison**")
+
+                        # Group by assignment
+                        from collections import defaultdict
+                        assignment_grades = defaultdict(list)
+                        for grade_row in all_course_grades:
+                            assignment_grades[grade_row['assignment_name']].append(grade_row['grade'])
+
+                        # Show each assignment with comparison
+                        for assignment_name in sorted(assignment_grades.keys()):
+                            all_grades_for_assignment = assignment_grades[assignment_name]
+                            class_avg = sum(all_grades_for_assignment) / len(all_grades_for_assignment)
+
+                            # Get this student's grade for this assignment
+                            student_grade = course_grades[course_grades['assignment_name'] == assignment_name]['grade'].values
+                            if len(student_grade) > 0:
+                                student_grade = student_grade[0]
+
+                                # Create comparison display
+                                col1, col2, col3 = st.columns([0.4, 0.3, 0.3])
+
+                                with col1:
+                                    st.write(f"**{assignment_name}**")
+
+                                with col2:
+                                    st.metric("Your Grade", f"{student_grade:.1f}%")
+
+                                with col3:
+                                    diff = student_grade - class_avg
+                                    if diff > 0:
+                                        st.metric("vs Class Avg", f"+{diff:.1f}%", delta_color="inverse")
+                                    else:
+                                        st.metric("vs Class Avg", f"{diff:.1f}%", delta_color="inverse")
+
+                                # Visual histogram showing grade distribution
+                                import pandas as pd
+                                import matplotlib.pyplot as plt
+
+                                fig, ax = plt.subplots(figsize=(10, 4))
+
+                                # Create histogram of all grades
+                                ax.hist(all_grades_for_assignment, bins=10, alpha=0.7, color='skyblue', edgecolor='black')
+
+                                # Add vertical line for class average
+                                ax.axvline(class_avg, color='orange', linestyle='--', linewidth=2, label=f'Class Avg: {class_avg:.1f}%')
+
+                                # Add vertical line for student's grade
+                                ax.axvline(student_grade, color='green', linestyle='-', linewidth=2, label=f'Your Grade: {student_grade:.1f}%')
+
+                                ax.set_xlabel('Grade (%)', fontsize=11)
+                                ax.set_ylabel('Number of Students', fontsize=11)
+                                ax.set_title(f'Grade Distribution - {assignment_name}', fontsize=12, fontweight='bold')
+                                ax.legend(fontsize=10)
+                                ax.grid(True, alpha=0.3)
+
+                                st.pyplot(fig)
+                                plt.close(fig)
+
+                                st.divider()
                 else:
                     st.write("No grades yet for this course.")
     else:
