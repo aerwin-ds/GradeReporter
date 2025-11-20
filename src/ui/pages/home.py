@@ -42,6 +42,19 @@ def show_home_page():
             show_parent_requests_page()
         else:
             st.error("Unauthorized access to parent engagement feature.")
+    elif current_page == 'low_grade_alerts':
+        # Route to appropriate low grade alerts page based on role
+        if user['role'] == ROLES['STUDENT']:
+            from src.features.feature_8.ui import show_student_alerts_page
+            show_student_alerts_page()
+        elif user['role'] == ROLES['PARENT']:
+            from src.features.feature_8.ui import show_parent_alerts_page
+            show_parent_alerts_page()
+        elif user['role'] == ROLES['TEACHER']:
+            from src.features.feature_8.ui import show_teacher_at_risk_students
+            show_teacher_at_risk_students()
+        else:
+            st.error("Unauthorized access to grade alerts feature.")
     else:
         st.info(f"Page '{current_page}' is under construction.")
 
