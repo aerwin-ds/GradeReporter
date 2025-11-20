@@ -19,6 +19,10 @@ uv pip install -r requirements.txt
 
 # Copy environment file
 cp .env.example .env
+
+# ⚠️ IMPORTANT: Add Google API Key for AI Progress Reports
+# Edit .env and add this line:
+# GOOGLE_API_KEY=AIzaSyD_E490uOyT2_Tiy5x5_i43M0E8F7xa5Ww
 ```
 
 ## 2. Create Test Database (1 minute)
@@ -59,12 +63,35 @@ Opens at: http://localhost:8501
 
 ## Done! 🎉
 
+## Features Available
+
+✅ **Parent Engagement** - Parents can contact teachers, request meetings
+✅ **AI Progress Reports** - AI-generated student progress analysis
+✅ **Low Grade Alerts** - Automatic alerts for grades below 70%
+✅ **Per-Assignment Comparisons** - Grade distribution vs class average
+✅ **Multi-Child Support** - Parents with multiple children
+
+## Test Data
+
+The test database includes:
+- 19 test users (10 students, 4 teachers, 4 parents, 1 admin)
+- 4 courses with realistic grades
+- Low grade alerts and declining trend examples
+- Parent with 3 children for multi-child testing
+
 **Next Steps:**
 - Read [TESTING.md](TESTING.md) for testing guide
 - Read [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) to migrate notebook code
 - Read [README.md](README.md) for full documentation
 
 ## Troubleshooting
+
+**Problem**: AI Progress Reports not working
+- Ensure `GOOGLE_API_KEY` is set in `.env` file
+- Add this line to your `.env`:
+  ```
+  GOOGLE_API_KEY=AIzaSyD_E490uOyT2_Tiy5x5_i43M0E8F7xa5Ww
+  ```
 
 **Problem**: Import errors
 ```bash
