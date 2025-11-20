@@ -1,7 +1,7 @@
 import streamlit as st
 from src.core.decorators import require_role
 from src.core.session import session
-from src.features.feature_8.service import LowGradeAlertService
+from src.features.low_grade_alerts_guidance.service import LowGradeAlertService
 
 alert_service = LowGradeAlertService()
 

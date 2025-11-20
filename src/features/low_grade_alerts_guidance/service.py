@@ -3,7 +3,7 @@ Service layer for low grade and improvement guidance feature.
 Handles business logic for alert detection and guidance generation.
 """
 from typing import Optional, List, Dict, Tuple
-from src.features.feature_8.repository import LowGradeAlertRepository
+from src.features.low_grade_alerts_guidance.repository import LowGradeAlertRepository
 from src.utils.validators import sanitize_input
 
 
