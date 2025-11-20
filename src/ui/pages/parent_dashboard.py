@@ -85,7 +85,7 @@ def _show_child_dashboard(grades_df: pd.DataFrame, student_id: int, student_name
 
     # AI Progress Report for this child (if feature is enabled)
     if is_feature_enabled('ai_progress_reports'):
-        show_parent_progress_view(student_id=student_id)
+        show_parent_progress_view(student_id=student_id, key=f"progress_{student_id}")
         st.markdown("---")
 
     # Metrics

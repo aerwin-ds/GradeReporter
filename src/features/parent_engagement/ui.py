@@ -73,13 +73,13 @@ def _show_request_history(parent_id: int):
         st.metric("Approved", sum(1 for r in requests if r["status"] == "approved"))
     st.markdown("---")
     for req in requests:
-        with st.expander(f"{req["request_type"].title()}: {req["subject"]} - {format_status_badge(req["status"])}", expanded=False):
+        with st.expander(f"{req["request_type"].title()}: {req["subject"]} - {req["status"].upper()}", expanded=False):
             c1, c2 = st.columns(2)
             with c1:
                 st.write(f"Teacher: {req["teacher_name"]}")
                 st.write(f"Student: {req["student_name"]}")
             with c2:
-                st.write(f"Status: {format_status_badge(req["status"])}")
+                st.markdown(f"Status: {format_status_badge(req["status"])}", unsafe_allow_html=True)
                 st.write(f"Date: {req["created_at"]}")
             st.write(req["message"])
             if req.get("preferred_times"):
@@ -120,7 +120,7 @@ def _show_request_card(req: dict, teacher_id: int):
             st.write(f"From: {req["parent_name"]}")
             st.write(f"Student: {req["student_name"]}")
         with c2:
-            st.write(f"Status: {format_status_badge(req["status"])}")
+            st.markdown(f"Status: {format_status_badge(req["status"])}", unsafe_allow_html=True)
             st.write(f"Date: {req["created_at"]}")
         st.write(req["message"])
         if req.get("preferred_times"):

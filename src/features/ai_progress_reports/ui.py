@@ -138,12 +138,13 @@ def show_progress_report_history(student_id: int):
         st.error(f"❌ Error loading history: {str(e)}")
 
 
-def show_parent_progress_view(student_id: int):
+def show_parent_progress_view(student_id: int, key: str = None):
     """
     Parent-friendly view of student's AI progress report.
 
     Args:
         student_id: Student's ID
+        key: Optional Streamlit key for component uniqueness when rendering multiple children
     """
     st.markdown("### 📊 Your Child's Progress Report")
 
@@ -165,7 +166,7 @@ def show_parent_progress_view(student_id: int):
             st.write("View AI-generated insights about your child's academic progress.")
 
         with col2:
-            if st.button("🔄 Refresh"):
+            if st.button("🔄 Refresh", key=f"{key}_refresh" if key else None):
                 st.rerun()
 
         # Generate report
@@ -220,7 +221,7 @@ def show_parent_progress_view(student_id: int):
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            if st.button("📧 Request Teacher Meeting"):
+            if st.button("📧 Request Teacher Meeting", key=f"{key}_request_meeting" if key else "request_meeting"):
                 st.info("Meeting request feature coming soon!")
 
         with col2:
@@ -228,11 +229,12 @@ def show_parent_progress_view(student_id: int):
                 label="📥 Download Report",
                 data=result['report_text'],
                 file_name=f"student_report_{datetime.now().strftime('%Y%m%d')}.txt",
-                mime="text/plain"
+                mime="text/plain",
+                key=f"{key}_download" if key else "download"
             )
 
         with col3:
-            if st.button("📚 View History"):
+            if st.button("📚 View History", key=f"{key}_view_history" if key else "view_history"):
                 show_progress_report_history(student_id)
 
     except Exception as e:
