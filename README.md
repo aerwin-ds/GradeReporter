@@ -17,7 +17,9 @@ A collaborative grade reporting system built with **Streamlit** and modular Pyth
 ### Future Features (Planned)
 6. Feature 6 (TBD)
 7. Feature 7 (TBD)
-8. Feature 8 (TBD)
+
+### Recently Implemented
+8. **Low Grade Alerts & Improvement Guidance** - Automatic alerts for low grades with personalized guidance
 
 ## 🚀 Quick Start
 
@@ -98,7 +100,8 @@ GradeReporter/
 │   │   ├── parent_engagement/
 │   │   ├── after_hours/
 │   │   ├── ai_progress_reports/
-│   │   └── feature_6-8/      # Future features
+│   │   ├── low_grade_alerts_guidance/
+│   │   └── feature_6-7/      # Future features
 │   ├── models/                # Data models
 │   ├── utils/                 # Utilities
 │   └── ui/                    # Streamlit UI

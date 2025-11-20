@@ -79,7 +79,7 @@ def show_teacher_dashboard():
     st.markdown("---")
 
     # At-risk students
-    from src.features.feature_8.service import LowGradeAlertService
+    from src.features.low_grade_alerts_guidance.service import LowGradeAlertService
     alert_service = LowGradeAlertService()
     teacher_id = user.get("teacher_id")
 

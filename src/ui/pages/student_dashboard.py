@@ -17,7 +17,7 @@ def show_student_dashboard():
     st.markdown(f'<h1 class="main-header">Welcome, {user["name"]}!</h1>', unsafe_allow_html=True)
 
     # Show low grade alerts if any
-    from src.features.feature_8.service import LowGradeAlertService
+    from src.features.low_grade_alerts_guidance.service import LowGradeAlertService
     alert_service = LowGradeAlertService()
     student_id = user.get("student_id")
 

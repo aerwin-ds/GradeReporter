@@ -60,7 +60,7 @@ def show_parent_dashboard():
 def _show_child_dashboard(grades_df: pd.DataFrame, student_id: int, student_name: str):
     """Show dashboard for a specific child."""
     # Show low grade alerts if any
-    from src.features.feature_8.service import LowGradeAlertService
+    from src.features.low_grade_alerts_guidance.service import LowGradeAlertService
     alert_service = LowGradeAlertService()
 
     # Get parent ID from user
