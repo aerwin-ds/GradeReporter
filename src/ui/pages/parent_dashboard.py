@@ -6,6 +6,8 @@ import pandas as pd
 from src.core.decorators import require_role
 from src.core.rbac import RBACFilter
 from src.core.session import session
+from config.settings import is_feature_enabled
+from src.features.ai_progress_reports.ui import show_parent_progress_view
 
 
 @require_role('parent')
@@ -80,6 +82,11 @@ def _show_child_dashboard(grades_df: pd.DataFrame, student_id: int, student_name
     if child_grades.empty:
         st.info(f"No grades available for {student_name} yet.")
         return
+
+    # AI Progress Report for this child (if feature is enabled)
+    if is_feature_enabled('ai_progress_reports'):
+        show_parent_progress_view(student_id=student_id)
+        st.markdown("---")
 
     # Metrics
     col1, col2 = st.columns(2)

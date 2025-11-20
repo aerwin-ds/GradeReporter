@@ -12,9 +12,9 @@ A collaborative grade reporting system built with **Streamlit** and modular Pyth
 2. **Announcements System** (Meetika Kanumukula) - Teacher/admin announcements
 3. **Parent Engagement Tools** (Keith) - Parent-teacher communication
 4. **After-Hours Question System** (Jaikishan) - Timezone-aware Q&A
+5. **AI Progress Reports** (Autumn Erwin) - LangChain + Google Gemini powered student reports
 
 ### Future Features (Planned)
-5. Feature 5 (TBD)
 6. Feature 6 (TBD)
 7. Feature 7 (TBD)
 8. Feature 8 (TBD)
@@ -37,10 +37,14 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 2. Create Test Database
+### 2. Configure Environment
 ```bash
 # Copy environment template
 cp .env.example .env
+
+# Edit .env and add your Google API key for AI features
+# GOOGLE_API_KEY=your-api-key-here
+# Get your free API key at: https://makersuite.google.com/app/apikey
 
 # Create test database with sample data
 python scripts/create_test_db.py
@@ -93,7 +97,8 @@ GradeReporter/
 │   │   ├── announcements/
 │   │   ├── parent_engagement/
 │   │   ├── after_hours/
-│   │   └── feature_5-8/      # Future features
+│   │   ├── ai_progress_reports/
+│   │   └── feature_6-8/      # Future features
 │   ├── models/                # Data models
 │   ├── utils/                 # Utilities
 │   └── ui/                    # Streamlit UI
@@ -194,6 +199,7 @@ mypy src/
 - **Frontend**: Streamlit
 - **Database**: SQLite + SQLAlchemy
 - **Authentication**: bcrypt
+- **AI/LLM**: LangChain + Google Gemini 2.5 Flash
 - **Testing**: pytest
 - **Code Quality**: black, flake8, mypy
 
