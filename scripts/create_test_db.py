@@ -155,6 +155,21 @@ def create_main_database():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE AIReports (
+            report_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id INTEGER NOT NULL,
+            course_id INTEGER,
+            generated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            report_text TEXT,
+            strengths TEXT,
+            improvements TEXT,
+            next_steps TEXT,
+            FOREIGN KEY (student_id) REFERENCES Students(student_id),
+            FOREIGN KEY (course_id) REFERENCES Courses(course_id)
+        )
+    """)
+
     print("[OK] Tables created")
 
     # Create test accounts
