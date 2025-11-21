@@ -127,3 +127,38 @@ def announcements_page():
     display_announcements()
     if current_session['role'] in ['teacher', 'admin']:
         _create_announcement_form()
+
+
+
+
+
+
+
+
+
+
+
+announcements_page()
+# Meetika Kanumukula
+
+
+
+
+if current_session:
+    display_announcements()
+
+else:
+    print("Please log in first to access the announcements menu.")
+    # Meetika Kanumukula
+
+
+
+
+if current_session:
+    announcements_page()
+else:
+    print("Please log in first to access the teacher/admin dashboard.")
+
+
+
+
