@@ -37,6 +37,7 @@ FEATURES = {
     'parent_engagement': os.getenv('FEATURE_PARENT_ENGAGEMENT', 'True').lower() == 'true',
     'after_hours': os.getenv('FEATURE_AFTER_HOURS', 'True').lower() == 'true',
     'ai_progress_reports': os.getenv('FEATURE_AI_PROGRESS_REPORTS', 'True').lower() == 'true',
+    'schedule_area': True,
     'feature_6': os.getenv('FEATURE_6', 'False').lower() == 'true',
     'feature_7': os.getenv('FEATURE_7', 'False').lower() == 'true',
     'feature_8': os.getenv('FEATURE_8', 'False').lower() == 'true',
