@@ -1,7 +1,7 @@
 # After-Hours Connect Feature
 
-**Author**: TBD  
-**Status**: In Development  
+**Author**: Jaikishan Manivannan  
+**Status**: Production Ready  
 **Tech Stack**: Python, Streamlit, SQLite/Postgres
 
 ## Overview
