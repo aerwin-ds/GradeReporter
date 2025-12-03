@@ -21,8 +21,10 @@ uv pip install -r requirements.txt
 cp .env.example .env
 
 # ⚠️ IMPORTANT: Add Google API Key for AI Progress Reports
-# Edit .env and add this line:
-# GOOGLE_API_KEY=AIzaSyD_E490uOyT2_Tiy5x5_i43M0E8F7xa5Ww
+# 1. Go to https://aistudio.google.com/app/apikeys
+# 2. Click "Create API Key"
+# 3. Copy your new API key
+# 4. Edit .env and add: GOOGLE_API_KEY=your_api_key_here
 ```
 
 ## 2. Create Test Database (1 minute)
@@ -88,10 +90,11 @@ The test database includes:
 
 **Problem**: AI Progress Reports not working
 - Ensure `GOOGLE_API_KEY` is set in `.env` file
-- Add this line to your `.env`:
-  ```
-  GOOGLE_API_KEY=AIzaSyD_E490uOyT2_Tiy5x5_i43M0E8F7xa5Ww
-  ```
+- Generate a new API key:
+  1. Go to https://aistudio.google.com/app/apikeys
+  2. Click "Create API Key"
+  3. Add to `.env`: `GOOGLE_API_KEY=your_key_here`
+- **IMPORTANT**: Never commit the API key to GitHub. Keep it in `.env` (which is in `.gitignore`)
 
 **Problem**: Import errors
 ```bash
