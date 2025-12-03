@@ -23,10 +23,6 @@ class ScheduleRepository:
     def get_student_schedule(self, student_id: int) -> List[Dict]:
         """
         All assignments/exams with due dates for a given student.
-
-        Expects:
-          - Grades: student_id, course_id, assignment_name, grade, due_date
-          - Courses: course_id, course_name
         """
         query = """
             SELECT
@@ -45,12 +41,6 @@ class ScheduleRepository:
     def get_parent_schedule(self, parent_id: int) -> List[Dict]:
         """
         All assignments/exams with due dates for all children of a parent.
-
-        Expects:
-          - Parent_Student: parent_id, student_id
-          - Students: student_id, student_name
-          - Grades: student_id, course_id, assignment_name, grade, due_date
-          - Courses: course_id, course_name
         """
         query = """
             SELECT
@@ -58,9 +48,10 @@ class ScheduleRepository:
                 g.due_date,
                 g.grade,
                 c.course_name,
-                s.student_name
+                u.name AS student_name
             FROM Parent_Student ps
             JOIN Students s ON s.student_id = ps.student_id
+            JOIN Users u ON u.user_id = s.user_id
             JOIN Grades g ON g.student_id = s.student_id
             JOIN Courses c ON c.course_id = g.course_id
             WHERE ps.parent_id = ?
@@ -71,11 +62,7 @@ class ScheduleRepository:
 
     def get_teacher_schedule(self, teacher_id: int) -> List[Dict]:
         """
-        All assignments/exams with due dates across courses taught by a teacher.
-
-        Expects:
-          - Courses: course_id, course_name, teacher_id
-          - Grades: course_id, assignment_name, grade, due_date
+        All assignments/exams with due dates for courses taught by a teacher.
         """
         query = """
             SELECT
