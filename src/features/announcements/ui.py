@@ -174,7 +174,7 @@ def _render_post_form(role: str, user_id: int, teacher_id: Optional[int]) -> Non
                 )
                 if result.get("success"):
                     st.success(result.get("message", "Announcement posted."))
-                    st.experimental_rerun()
+                    st.rerun()
             except ValueError as ve:
                 st.error(f"Validation Error: {ve}")
             except Exception as ex:
