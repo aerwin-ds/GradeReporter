@@ -66,6 +66,14 @@ def main():
             from src.ui.pages.after_hours import show_after_hours_page
             show_after_hours_page()
 
+        elif current_page in ["student_dashboard", "parent_dashboard", "teacher_dashboard", "admin_dashboard",
+                              "parent_engagement", "low_grade_alerts", "announcements", "schedule_area"]:
+            from src.ui.pages.home import show_home_page
+            show_home_page()
+
+        else:
+            st.info(f"Page '{current_page}' is under construction.")
+
 
 if __name__ == "__main__":
     main()

@@ -36,7 +36,7 @@ def show_announcements_page() -> None:
     user_id = user.get("user_id")
     teacher_id = user.get("teacher_id")
 
-    st.markdown("<h1>📢 Announcements</h1>", unsafe_allow_html=True)
+    st.title("📢 Announcements")
     tab_view, tab_post = st.tabs(["View", "Post"])
 
     with tab_view:

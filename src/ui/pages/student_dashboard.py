@@ -14,7 +14,8 @@ def show_student_dashboard():
     """Render the student dashboard."""
     user = session.get_current_user()
 
-    st.markdown(f'<h1 class="main-header">Welcome, {user["name"]}!</h1>', unsafe_allow_html=True)
+    st.title("📊 My Grades")
+    st.markdown(f'Welcome, {user["name"]}!', unsafe_allow_html=False)
 
     # Get student's grades using RBAC filtering
     grades_df = RBACFilter.get_authorized_grades()

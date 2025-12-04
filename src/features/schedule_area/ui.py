@@ -44,7 +44,7 @@ def show_schedule_page():
         st.warning("Please log in to view schedule.")
         return
 
-    st.markdown("<h1>📅 Schedule Area</h1>", unsafe_allow_html=True)
+    st.title("📅 Schedule")
     st.caption("A unified view of upcoming exams and assignments per class, with filters and reminders.")
 
     role = user["role"]
