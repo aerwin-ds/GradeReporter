@@ -5,6 +5,7 @@ import streamlit as st
 from src.core.decorators import require_role
 from src.core.rbac import RBACFilter
 from src.core.session import session
+from src.features.grade_management.service import GradeManagementService
 
 
 @require_role('teacher', 'admin')
@@ -12,7 +13,8 @@ def show_teacher_dashboard():
     """Render the teacher dashboard."""
     user = session.get_current_user()
 
-    st.markdown(f'<h1 class="main-header">Welcome, {user["name"]}!</h1>', unsafe_allow_html=True)
+    st.title("👨‍🏫 Dashboard")
+    st.markdown(f'Welcome, {user["name"]}!')
 
     # Get teacher's courses and grades
     courses_df = RBACFilter.get_authorized_courses()
@@ -94,3 +96,54 @@ def show_teacher_dashboard():
         )
 
     st.markdown("---")
+
+    # Grade editing section
+    if not courses_df.empty:
+        st.markdown("### ✏️ Edit Grades")
+        st.caption("Modify grades for your courses. Changes are saved immediately.")
+
+        grade_service = GradeManagementService()
+
+        # Select course to edit grades for
+        course_names = courses_df['course_name'].tolist()
+        selected_course = st.selectbox("Select a course to edit grades:", course_names, key="edit_course_select")
+
+        if selected_course:
+            # Filter grades for the selected course from the already-loaded grades_df
+            course_grades_df = grades_df[grades_df['course_name'] == selected_course]
+
+            if not course_grades_df.empty:
+                st.subheader(f"Editing Grades for {selected_course}")
+
+                # Display grades with edit options
+                for idx, (_, grade_row) in enumerate(course_grades_df.iterrows()):
+                    col1, col2, col3, col4 = st.columns([2, 2, 1, 1])
+
+                    with col1:
+                        st.write(f"**{grade_row['student_name']}**")
+
+                    with col2:
+                        st.write(grade_row['assignment_name'])
+
+                    with col3:
+                        new_grade = st.number_input(
+                            "New Grade",
+                            min_value=0.0,
+                            max_value=100.0,
+                            value=float(grade_row['grade']),
+                            step=0.5,
+                            key=f"grade_{grade_row['grade_id']}"
+                        )
+
+                    with col4:
+                        if st.button("Save", key=f"save_{grade_row['grade_id']}", use_container_width=True):
+                            if new_grade != float(grade_row['grade']):
+                                result = grade_service.update_grade(grade_row['grade_id'], new_grade)
+                                if result['success']:
+                                    st.success(f"Updated to {new_grade}%")
+                                else:
+                                    st.error(f"Failed: {result['message']}")
+                            else:
+                                st.info("No change")
+            else:
+                st.info("No grades to edit for this course yet.")

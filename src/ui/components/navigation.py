@@ -181,6 +181,12 @@ def render_navigation():
 
             st.markdown("---")
 
+            # Notifications widget
+            from src.features.notifications.ui import show_notifications_widget
+            show_notifications_widget()
+
+            st.markdown("---")
+
             # Logout button
             if st.button("🚪 Logout", use_container_width=True):
                 session.logout()

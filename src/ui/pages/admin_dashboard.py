@@ -7,12 +7,13 @@ import sqlite3
 from src.core.decorators import require_role
 from src.core.rbac import RBACFilter
 from config.database import db_manager
+from src.features.grade_management.service import GradeManagementService
 
 
 @require_role('admin')
 def show_admin_dashboard():
     """Render the admin dashboard."""
-    st.markdown('<h1 class="main-header">Admin Dashboard</h1>', unsafe_allow_html=True)
+    st.title("⚙️ Admin Dashboard")
     st.caption("System statistics, user management, and performance analytics")
 
     # Get system-wide data
@@ -215,62 +216,120 @@ def _render_courses_tab(courses_df: pd.DataFrame):
 
 
 def _render_grades_tab(grades_df: pd.DataFrame):
-    """Render grade management and oversight tab."""
-    st.subheader("Grade Oversight")
+    """Render grade management and edit tab."""
+    st.subheader("Grade Management")
 
     if grades_df.empty:
         st.info("No grades found.")
         return
 
-    # Filter options
-    col1, col2 = st.columns(2)
+    grade_service = GradeManagementService()
 
-    with col1:
-        selected_course = st.selectbox(
-            "Filter by Course",
-            options=["All Courses"] + sorted(grades_df['course_name'].unique().tolist())
-        )
+    # Create two sections: View and Edit
+    tab_view, tab_edit = st.tabs(["View Grades", "Edit Grades"])
 
-    with col2:
-        selected_teacher = st.selectbox(
-            "Filter by Instructor",
-            options=["All Instructors"] + sorted(grades_df['teacher_name'].unique().tolist())
-        )
+    with tab_view:
+        # Filter options
+        col1, col2 = st.columns(2)
 
-    # Apply filters
-    filtered_grades = grades_df.copy()
+        with col1:
+            selected_course = st.selectbox(
+                "Filter by Course",
+                options=["All Courses"] + sorted(grades_df['course_name'].unique().tolist()),
+                key="admin_course_filter"
+            )
 
-    if selected_course != "All Courses":
-        filtered_grades = filtered_grades[filtered_grades['course_name'] == selected_course]
+        with col2:
+            selected_teacher = st.selectbox(
+                "Filter by Instructor",
+                options=["All Instructors"] + sorted(grades_df['teacher_name'].unique().tolist()),
+                key="admin_teacher_filter"
+            )
 
-    if selected_teacher != "All Instructors":
-        filtered_grades = filtered_grades[filtered_grades['teacher_name'] == selected_teacher]
+        # Apply filters
+        filtered_grades = grades_df.copy()
 
-    st.markdown("---")
+        if selected_course != "All Courses":
+            filtered_grades = filtered_grades[filtered_grades['course_name'] == selected_course]
 
-    # Summary statistics for filtered grades
-    col1, col2, col3 = st.columns(3)
+        if selected_teacher != "All Instructors":
+            filtered_grades = filtered_grades[filtered_grades['teacher_name'] == selected_teacher]
 
-    with col1:
-        st.metric("Total Grades", len(filtered_grades))
+        st.markdown("---")
 
-    with col2:
-        avg_grade = filtered_grades['grade'].mean()
-        st.metric("Average Grade", f"{avg_grade:.1f}%")
+        # Summary statistics for filtered grades
+        col1, col2, col3 = st.columns(3)
 
-    with col3:
-        std_dev = filtered_grades['grade'].std()
-        st.metric("Standard Deviation", f"{std_dev:.1f}" if pd.notna(std_dev) else "N/A")
+        with col1:
+            st.metric("Total Grades", len(filtered_grades))
 
-    st.markdown("---")
+        with col2:
+            avg_grade = filtered_grades['grade'].mean()
+            st.metric("Average Grade", f"{avg_grade:.1f}%")
 
-    # Display filtered grades table
-    st.markdown("#### 📋 Grades Details")
-    display_df = filtered_grades[['student_name', 'assignment_name', 'grade', 'date_assigned', 'course_name']].copy()
-    display_df.columns = ['Student', 'Assignment', 'Grade', 'Date', 'Course']
-    display_df['Grade'] = display_df['Grade'].apply(lambda x: f"{x:.1f}%")
+        with col3:
+            std_dev = filtered_grades['grade'].std()
+            st.metric("Standard Deviation", f"{std_dev:.1f}" if pd.notna(std_dev) else "N/A")
 
-    st.dataframe(display_df, use_container_width=True, hide_index=True)
+        st.markdown("---")
+
+        # Display filtered grades table
+        st.markdown("#### 📋 Grades Details")
+        display_df = filtered_grades[['student_name', 'assignment_name', 'grade', 'date_assigned', 'course_name']].copy()
+        display_df.columns = ['Student', 'Assignment', 'Grade', 'Date', 'Course']
+        display_df['Grade'] = display_df['Grade'].apply(lambda x: f"{x:.1f}%")
+
+        st.dataframe(display_df, use_container_width=True, hide_index=True)
+
+    with tab_edit:
+        st.markdown("**Edit grades for any course. Changes are saved immediately.**")
+
+        # Get all grades for editing
+        all_grades = grade_service.get_all_grades()
+
+        if all_grades:
+            # Group by course for easier editing
+            course_names = sorted(set(g['course_name'] for g in all_grades))
+            selected_course = st.selectbox("Select course to edit grades:", course_names, key="edit_admin_course")
+
+            # Filter grades for selected course
+            course_grades = [g for g in all_grades if g['course_name'] == selected_course]
+
+            if course_grades:
+                st.subheader(f"Editing {selected_course}")
+
+                # Display each grade with edit option
+                for idx, grade in enumerate(course_grades):
+                    col1, col2, col3, col4 = st.columns([2, 2, 1, 1])
+
+                    with col1:
+                        st.write(f"**{grade['student_name']}**")
+
+                    with col2:
+                        st.write(grade['assignment_name'])
+
+                    with col3:
+                        new_grade = st.number_input(
+                            "New Grade",
+                            min_value=0.0,
+                            max_value=100.0,
+                            value=float(grade['grade']),
+                            step=0.5,
+                            key=f"admin_grade_{grade['grade_id']}"
+                        )
+
+                    with col4:
+                        if st.button("Save", key=f"admin_save_{grade['grade_id']}", use_container_width=True):
+                            if new_grade != grade['grade']:
+                                result = grade_service.update_grade(grade['grade_id'], new_grade)
+                                if result['success']:
+                                    st.success(f"✓ Updated to {new_grade}%")
+                                else:
+                                    st.error(f"Failed: {result['message']}")
+                            else:
+                                st.info("No change")
+        else:
+            st.info("No grades to edit.")
 
 
 def _render_settings_tab():
@@ -282,7 +341,7 @@ def _render_settings_tab():
     col1, col2 = st.columns(2)
 
     with col1:
-        st.info("**Read-Only Analytics**\nAdministrators can view all system data but cannot directly edit teacher-entered grades or student records.")
+        st.info("**Read/Write - Full Grade Management**\nAdministrators can view all system data and have full permissions to edit grades across all courses.")
 
     with col2:
         st.info("**Audit Trail**\nAll administrative actions are logged for security and compliance purposes.")

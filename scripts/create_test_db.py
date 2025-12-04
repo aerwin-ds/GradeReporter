@@ -171,6 +171,18 @@ def create_main_database():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE Notifications (
+            notification_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            recipient_id INTEGER NOT NULL,
+            notification_type TEXT NOT NULL,
+            message TEXT NOT NULL,
+            is_read INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (recipient_id) REFERENCES Users(user_id)
+        )
+    """)
+
     print("[OK] Tables created")
 
     # Create test accounts

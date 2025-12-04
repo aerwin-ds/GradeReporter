@@ -41,8 +41,8 @@ def _show_new_request_form(parent_id: int, user: dict):
     )
     students = db_manager.execute_query(query, tuple(student_ids))
 
-    # students rows are (student_id, name)
-    student_options = {name: sid for sid, name in students}
+    # students rows are now dictionaries with 'name' and 'student_id' keys
+    student_options = {s['name']: s['student_id'] for s in students}
     if not student_options:
         st.warning("No children found.")
         return

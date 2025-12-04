@@ -67,12 +67,13 @@ class DatabaseManager:
             db_type: Either 'main' or 'after_hours'
 
         Returns:
-            List of result rows
+            List of result rows as dictionaries
         """
         with self.get_connection(db_type) as conn:
+            conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             cursor.execute(query, params)
-            return cursor.fetchall()
+            return [dict(row) for row in cursor.fetchall()]
 
     def execute_update(self, query: str, params: tuple = (), db_type: str = 'main') -> int:
         """
