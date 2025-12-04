@@ -46,7 +46,7 @@ class AfterHoursConfig:
         start_str = os.getenv("AFTER_HOURS_START", "17:00")  # 5 PM
         end_str = os.getenv("AFTER_HOURS_END", "21:00")      # 9 PM
         tz = os.getenv("AFTER_HOURS_TIMEZONE", "America/Chicago")
-        enabled = os.getenv("FEATURE_AFTER_HOURS_CONNECT", "false").lower() == "true"
+        enabled = os.getenv("FEATURE_AFTER_HOURS", "true").lower() == "true"
 
         def parse_hh_mm(value: str) -> time:
             hour, minute = value.split(":")

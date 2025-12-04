@@ -11,8 +11,6 @@ import uuid
 import smtplib
 from email.message import EmailMessage
 from typing import Optional, Tuple
-from IPython.display import display, clear_output
-import ipywidgets as widgets
 
 # ------------------ DATABASE SETUP -----------------------------
 DB_PATH = "after_hours.db"
@@ -224,67 +222,3 @@ class AfterHoursSystem:
         conn.close()
         return df
 
-# ------------------ INITIALIZE SYSTEM --------------------------
-if os.path.exists(DB_PATH):
-    os.remove(DB_PATH)
-    print("🧹 Old database removed — starting fresh.")
-
-sys = AfterHoursSystem()
-
-teacher_names = ["Ms. Parker", "Mr. Lee", "Dr. Smith", "Ms. Johnson", "Mr. Patel"]
-for t in teacher_names:
-    tid = sys.add_teacher(t, "America/New_York", f"{t.lower().replace(' ', '')}@school.edu")
-    for wd in range(5):  # Mon–Fri 9–5
-        sys.set_availability(tid, wd, "09:00", "17:00")
-
-print("✅ 5 default teachers created successfully.\n")
-
-# ------------------ STUDENT / PARENT WIDGET --------------------
-teacher_df = sys.list_teachers()
-teacher_dropdown = widgets.Dropdown(
-    options=[(row["name"], row["teacher_id"]) for _, row in teacher_df.iterrows()],
-    description="Teacher:",
-    style={'description_width': 'initial'},
-    layout=widgets.Layout(width="400px")
-)
-
-submitter_name = widgets.Text(description="Your Name:", layout=widgets.Layout(width="400px"))
-submitter_email = widgets.Text(description="Your Email:", layout=widgets.Layout(width="400px"))
-submitter_id = widgets.Text(description="Student/Parent ID:", layout=widgets.Layout(width="400px"))
-question_box = widgets.Textarea(description="Question:", layout=widgets.Layout(width="400px", height="100px"))
-submit_button = widgets.Button(description="Submit Question", button_style='success')
-output = widgets.Output()
-
-def on_submit_clicked(b):
-    with output:
-        clear_output()
-        try:
-            result = sys.submit_ticket(
-                teacher_id=teacher_dropdown.value,
-                submitter_name=submitter_name.value,
-                submitter_email=submitter_email.value,
-                submitter_id=submitter_id.value,
-                question=question_box.value
-            )
-            print(f"🎫 Ticket submitted successfully!")
-            print(f"Ticket ID: {result['ticket_id']}")
-            if result['scheduled_local']:
-                print(f"🕒 Scheduled Meet Time: {result['scheduled_local']}")
-            else:
-                print("No available slot found within the next 14 days.")
-            print(f"Assigned Teacher: {result['teacher']}")
-        except Exception as e:
-            print("❌ Error submitting ticket:", str(e))
-
-submit_button.on_click(on_submit_clicked)
-
-display(widgets.VBox([
-    widgets.HTML("<h3>📩 Submit After-Hours Question</h3>"),
-    teacher_dropdown,
-    submitter_name,
-    submitter_email,
-    submitter_id,
-    question_box,
-    submit_button,
-    output
-]))

@@ -19,17 +19,10 @@ def show_progress_report_widget(student_id: int, course_id: Optional[int] = None
     """
     st.markdown("### 🤖 AI-Generated Progress Report")
 
-    # Check if API key is configured
-    import os
-    if not os.getenv('GOOGLE_API_KEY'):
-        st.error("⚠️ Google API key not configured. Please add GOOGLE_API_KEY to your .env file.")
-        st.info("Get your API key at: https://makersuite.google.com/app/apikey")
-        return
-
     # Initialize service
     try:
         service = AIProgressReportService()
-    except ValueError as e:
+    except Exception as e:
         st.error(f"❌ {str(e)}")
         return
 
@@ -43,7 +36,7 @@ def show_progress_report_widget(student_id: int, course_id: Optional[int] = None
         force_regenerate = st.button("🔄 Regenerate", help="Generate a fresh report")
 
     # Generate the report
-    with st.spinner("🤖 Generating AI insights..."):
+    with st.spinner("🤖 Generating AI insights... This may take up to 30 seconds."):
         result = service.generate_progress_report(
             student_id=student_id,
             course_id=course_id,
@@ -147,11 +140,6 @@ def show_parent_progress_view(student_id: int, key: str = None):
         key: Optional Streamlit key for component uniqueness when rendering multiple children
     """
     st.markdown("### 📊 Your Child's Progress Report")
-
-    import os
-    if not os.getenv('GOOGLE_API_KEY'):
-        st.warning("AI reports are not currently available. Please contact your administrator.")
-        return
 
     try:
         service = AIProgressReportService()

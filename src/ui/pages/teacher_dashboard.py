@@ -78,29 +78,6 @@ def show_teacher_dashboard():
 
     st.markdown("---")
 
-    # At-risk students
-    from src.features.low_grade_alerts_guidance.service import LowGradeAlertService
-    alert_service = LowGradeAlertService()
-    teacher_id = user.get("teacher_id")
-
-    if teacher_id:
-        at_risk = alert_service.get_teacher_at_risk_students(teacher_id)
-        if at_risk:
-            st.warning(f"You have {len(at_risk)} student(s) with grade alerts")
-            with st.expander("View Students Needing Attention", expanded=False):
-                for student_info in at_risk:
-                    student_id = student_info[0]
-                    student_name = student_info[1]
-                    course_name = student_info[3] if len(student_info) > 3 else "Unknown Course"
-
-                    st.markdown(f"**{student_name}** - {course_name}")
-                    student_alerts = alert_service.get_student_alerts(student_id)
-                    if student_alerts:
-                        st.caption(f"{student_alerts[0]['alert_type'].replace('_', ' ').title()}: {student_alerts[0]['current_grade']:.1f}%")
-                    st.divider()
-
-    st.markdown("---")
-
     # Student performance overview
     if not grades_df.empty:
         st.markdown("### 📊 Student Performance Overview")
@@ -115,3 +92,5 @@ def show_teacher_dashboard():
             use_container_width=True,
             hide_index=True
         )
+
+    st.markdown("---")

@@ -59,23 +59,6 @@ def show_parent_dashboard():
 
 def _show_child_dashboard(grades_df: pd.DataFrame, student_id: int, student_name: str):
     """Show dashboard for a specific child."""
-    # Show low grade alerts if any
-    from src.features.low_grade_alerts_guidance.service import LowGradeAlertService
-    alert_service = LowGradeAlertService()
-
-    # Get parent ID from user
-    user = session.get_current_user()
-    parent_id = user.get("parent_id")
-
-    if parent_id:
-        alerts = alert_service.repository.get_parent_student_alerts(parent_id, student_id, dismissed=False)
-        if alerts:
-            st.warning(f"{student_name} has {len(alerts)} grade alert(s)")
-            for alert in alerts:
-                with st.container(border=True):
-                    st.markdown(f"**{alert['alert_type'].replace('_', ' ').title()}** in {alert['course_name']} ({alert['current_grade']:.1f}%)")
-                    st.caption(alert['alert_message'][:150] + "...")
-
     # Filter grades for this child
     child_grades = grades_df[grades_df['student_id'] == student_id]
 
@@ -140,3 +123,5 @@ def _show_child_dashboard(grades_df: pd.DataFrame, student_id: int, student_name
         use_container_width=True,
         hide_index=True
     )
+
+    st.markdown("---")
