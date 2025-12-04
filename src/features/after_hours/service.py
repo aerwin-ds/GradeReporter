@@ -1,13 +1,10 @@
 """
 Service layer for the After-Hours Connect feature.
 
-This module contains:
-- AfterHoursConfig: configuration (feature flag + time window)
-- AfterHoursRepository protocol: expected repository interface
-- AfterHoursService: main business-logic entrypoint
-
-The repository is kept abstract so you can implement it using
-SQLite, Postgres, SQLAlchemy, etc., in `repository.py`.
+This wraps the repository and enforces basic business rules:
+- Which roles can submit questions
+- Which roles can view / respond to questions
+- How student/parent context is handled
 """
 
 from __future__ import annotations
@@ -75,230 +72,127 @@ class AfterHoursConfig:
 
         current_time = dt.time()
 
-        # Simple "same day" window: START <= time <= END
-        # (If you need cross-midnight windows, adjust here.)
-        return self.start_time <= current_time <= self.end_time
+from .repository import AfterHoursRepository, AfterHoursRequest
 
+StatusType = Literal["pending", "answered", "closed"]
 
-# ---------------------------------------------------------------------------
-# Repository protocol (interface)
-# ---------------------------------------------------------------------------
-
-class AfterHoursRepository(Protocol):
-    """
-    Protocol describing the repository that the service expects.
-
-    Implement this interface in `repository.py` and inject an instance of it
-    into AfterHoursService.
-    """
-
-    def create_request(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Insert a new after-hours request and return the created record."""
-        ...
-
-    def get_requests(
-        self,
-        *,
-        teacher_id: Optional[int] = None,
-        student_id: Optional[int] = None,
-        parent_id: Optional[int] = None,
-        course_id: Optional[int] = None,
-        status: Optional[StatusType] = None,
-        limit: int = 100,
-    ) -> List[Dict[str, Any]]:
-        """Return a list of requests filtered by the given parameters."""
-        ...
-
-    def update_request_status(
-        self,
-        request_id: int,
-        *,
-        status: StatusType,
-        teacher_id: Optional[int] = None,
-        resolution_note: Optional[str] = None,
-    ) -> Dict[str, Any]:
-        """Update status and (optionally) resolution note for a request."""
-        ...
-
-    def get_summary_metrics(
-        self,
-        *,
-        teacher_id: Optional[int] = None,
-        course_id: Optional[int] = None,
-        days: int = 30,
-    ) -> Dict[str, Any]:
-        """
-        Return summarized analytics for the after-hours requests.
-        Example fields:
-            {
-                "total_requests": 42,
-                "open_requests": 10,
-                "resolved_requests": 30,
-                "avg_response_hours": 4.2,
-            }
-        """
-        ...
-
-
-# ---------------------------------------------------------------------------
-# Service
-# ---------------------------------------------------------------------------
 
 class AfterHoursService:
-    """
-    Business logic for the After-Hours Connect feature.
+    def __init__(self, repo: AfterHoursRepository) -> None:
+        self.repo = repo
 
-    This layer:
-    - Validates time window (after-hours)
-    - Enforces basic role rules
-    - Delegates persistence to the repository
-    - Provides a friendly API for the UI layer
-    """
-
-    def __init__(
+    # ------------------------------------------------------------------
+    # Student / Parent actions
+    # ------------------------------------------------------------------
+    def submit_question(
         self,
-        repository: AfterHoursRepository,
-        config: Optional[AfterHoursConfig] = None,
-    ) -> None:
-        self.repository = repository
-        self.config = config or AfterHoursConfig.from_env()
-
-    @classmethod
-    def from_env(cls, repository: AfterHoursRepository) -> "AfterHoursService":
-        """Convenience constructor that pulls config from env."""
-        return cls(repository=repository, config=AfterHoursConfig.from_env())
-
-    # ------------------------------------------------------------------ #
-    # Core operations
-    # ------------------------------------------------------------------ #
-
-    def can_use_feature(self) -> bool:
-        """Check whether the feature flag is enabled."""
-        return self.config.feature_enabled
-
-    def is_within_after_hours(self) -> bool:
-        """Public helper for UI to check current window."""
-        return self.config.is_within_window()
-
-    def create_request(
-        self,
-        *,
-        student_id: Optional[int],
-        parent_id: Optional[int],
-        course_id: Optional[int],
-        teacher_id: Optional[int],
-        requested_for: str,
-        message: str,
-    ) -> Dict[str, Any]:
+        user_context: Dict[str, Any],
+        teacher_id: int,
+        question: str,
+        student_id: Optional[int] = None,
+    ) -> int:
         """
         Create a new after-hours request.
 
-        Raises ValueError if:
-        - Feature is disabled
-        - Not in after-hours window
-        - Required fields are missing
+        - Students: student_id is auto-inferred from the logged-in user if not provided.
+        - Parents: must explicitly select a student_id in the UI.
         """
-        if not self.can_use_feature():
-            raise ValueError("After-Hours Connect feature is currently disabled.")
+        role = user_context.get("role")
+        user_id = user_context.get("user_id")
 
-        if not self.is_within_after_hours():
-            raise ValueError("Requests can only be created during after-hours.")
+        if user_id is None:
+            raise ValueError("Missing user_id in user_context.")
+        if role not in ("student", "parent"):
+            raise PermissionError("Only students and parents can submit questions.")
+        if not question or not question.strip():
+            raise ValueError("Question cannot be empty.")
+        if teacher_id is None:
+            raise ValueError("Teacher must be selected.")
 
-        if not message.strip():
-            raise ValueError("Message cannot be empty.")
+        # Students: infer their own student_id if not given
+        if role == "student" and student_id is None:
+            student_id = self.repo.get_student_id_for_user(user_id)
 
-        if student_id is None and parent_id is None:
-            raise ValueError("Either student_id or parent_id must be provided.")
+        # Parents: require child selection
+        if role == "parent" and student_id is None:
+            raise ValueError("Please select which student this question is about.")
 
-        now = self._now()
-
-        payload: Dict[str, Any] = {
-            "student_id": student_id,
-            "parent_id": parent_id,
-            "teacher_id": teacher_id,
-            "course_id": course_id,
-            "requested_for": requested_for.strip() if requested_for else None,
-            "message": message.strip(),
-            "status": "open",
-            "created_at": now.isoformat(),
-            "updated_at": now.isoformat(),
-        }
-
-        return self.repository.create_request(payload)
-
-    def get_requests_for_teacher(
-        self,
-        *,
-        teacher_id: int,
-        status: Optional[StatusType] = None,
-        limit: int = 100,
-    ) -> List[Dict[str, Any]]:
-        """Fetch requests assigned (or relevant) to a specific teacher."""
-        return self.repository.get_requests(
+        return self.repo.create_request(
+            requester_id=user_id,
+            requester_role=role,
             teacher_id=teacher_id,
-            status=status,
-            limit=limit,
-        )
-
-    def get_requests_for_student_or_parent(
-        self,
-        *,
-        student_id: Optional[int] = None,
-        parent_id: Optional[int] = None,
-        limit: int = 100,
-    ) -> List[Dict[str, Any]]:
-        """Fetch requests visible to a student or parent."""
-        return self.repository.get_requests(
             student_id=student_id,
-            parent_id=parent_id,
-            limit=limit,
+            question=question.strip(),
         )
 
-    def update_request_status(
+    def get_my_requests(self, user_context: Dict[str, Any]) -> List[AfterHoursRequest]:
+        """All after-hours requests created by the logged-in user."""
+        user_id = user_context.get("user_id")
+        if user_id is None:
+            raise ValueError("Missing user_id in user_context.")
+        return self.repo.list_requests_for_requester(user_id)
+
+    # ------------------------------------------------------------------
+    # Teacher actions
+    # ------------------------------------------------------------------
+    def get_requests_for_teacher(self, user_context: Dict[str, Any]) -> List[AfterHoursRequest]:
+        """All after-hours requests addressed to the logged-in teacher."""
+        role = user_context.get("role")
+        user_id = user_context.get("user_id")
+
+        if user_id is None:
+            raise ValueError("Missing user_id in user_context.")
+        if role != "teacher":
+            raise PermissionError("Only teachers can view teacher after-hours requests.")
+
+        return self.repo.list_requests_for_teacher_user(user_id)
+
+    def respond_to_request(
         self,
-        *,
+        user_context: Dict[str, Any],
         request_id: int,
-        teacher_id: Optional[int],
-        new_status: StatusType,
-        resolution_note: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        response_text: str,
+        new_status: StatusType = "answered",
+    ) -> None:
         """
-        Update the status of a request.
-
-        Some simple sanity checks are performed here; more complex rules
-        (like only the assigned teacher can resolve) can be added later.
+        Save a teacher's response and update ticket status.
         """
-        if new_status not in ("open", "in_progress", "resolved", "cancelled"):
-            raise ValueError(f"Invalid status: {new_status}")
+        role = user_context.get("role")
+        if role != "teacher":
+            raise PermissionError("Only teachers can respond to after-hours requests.")
 
-        updated = self.repository.update_request_status(
+        if not response_text.strip():
+            raise ValueError("Response cannot be empty.")
+
+        # Optional: could verify that the ticket belongs to this teacher here.
+        self.repo.update_response(
             request_id=request_id,
+            response=response_text.strip(),
             status=new_status,
-            teacher_id=teacher_id,
-            resolution_note=resolution_note,
-        )
-        return updated
-
-    def get_summary_metrics(
-        self,
-        *,
-        teacher_id: Optional[int] = None,
-        course_id: Optional[int] = None,
-        days: int = 30,
-    ) -> Dict[str, Any]:
-        """Proxy to repository for aggregated metrics."""
-        return self.repository.get_summary_metrics(
-            teacher_id=teacher_id,
-            course_id=course_id,
-            days=days,
         )
 
-    # ------------------------------------------------------------------ #
-    # Internal helpers
-    # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
+    # Helper lookups for UI
+    # ------------------------------------------------------------------
+    def list_teachers_for_dropdown(self) -> List[Dict[str, Any]]:
+        """Return teachers in a format convenient for a selectbox."""
+        teachers = self.repo.list_teachers()
+        return [{"teacher_id": t_id, "name": name} for (t_id, name) in teachers]
 
-    def _now(self) -> datetime:
-        """Timezone-aware 'now' based on config."""
-        if ZoneInfo is not None:
-            return datetime.now(ZoneInfo(self.config.timezone))
-        return datetime.now()
+    def list_children_for_parent(self, user_context: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        For a logged-in parent, return their children as
+        [{student_id, name}, ...].
+        """
+        role = user_context.get("role")
+        user_id = user_context.get("user_id")
+
+        if role != "parent" or user_id is None:
+            return []
+
+        parent_id = self.repo.get_parent_id_for_user(user_id)
+        if parent_id is None:
+            return []
+
+        children = self.repo.list_children_for_parent(parent_id)
+        return [{"student_id": sid, "name": name} for (sid, name) in children]
