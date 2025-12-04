@@ -1,47 +1,36 @@
 """
-AI Progress Report Service - LangChain + Google Gemini integration.
+AI Progress Report Service - Groq API integration.
 Author: Autumn Erwin
 """
 import os
 import re
+import requests
 from typing import Dict, Any, Optional
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.output_parsers import StrOutputParser
 from src.features.ai_progress_reports.repository import AIProgressReportRepository
 from src.features.ai_progress_reports.prompts import create_progress_report_prompt
 
 
 class AIProgressReportService:
-    """Handles AI-powered progress report generation using Google Gemini."""
+    """Handles AI-powered progress report generation using Groq free API."""
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self):
         """
         Initialize the AI Progress Report Service.
-
-        Args:
-            api_key: Google API key. If None, reads from GOOGLE_API_KEY env var.
+        Uses Groq free API with user's API token.
         """
         self.repository = AIProgressReportRepository()
 
-        # Get API key from parameter or environment
-        self.api_key = api_key or os.getenv('GOOGLE_API_KEY')
-
-        if not self.api_key:
+        # Get Groq API token from environment
+        self.groq_token = os.getenv('GROQ_API_TOKEN')
+        if not self.groq_token:
             raise ValueError(
-                "Google API key not found. Please set GOOGLE_API_KEY environment variable "
-                "or pass it to the constructor."
+                "Groq API token not found. Please set GROQ_API_TOKEN in your .env file. "
+                "Get a free token at https://console.groq.com/keys"
             )
 
-        # Initialize Gemini model
-        self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
-            google_api_key=self.api_key,
-            temperature=0.7,  # Balanced creativity
-            max_output_tokens=2048,
-        )
-
-        # Output parser
-        self.output_parser = StrOutputParser()
+        # Groq API endpoint
+        self.api_url = "https://api.groq.com/openai/v1/chat/completions"
+        self.timeout = 30
 
     def generate_progress_report(
         self,
@@ -98,12 +87,49 @@ class AIProgressReportService:
             performance_compared_to_class=performance_data['performance_compared_to_class'],
         )
 
-        # Create the LangChain chain
-        chain = prompt | self.llm | self.output_parser
-
         try:
-            # Generate the report
-            report_text = chain.invoke({})
+            # Call Groq API with chat format
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.groq_token}"
+            }
+            payload = {
+                "model": "llama-3.3-70b-versatile",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt.template if hasattr(prompt, 'template') else str(prompt)
+                    }
+                ],
+                "temperature": 0.7,
+                "max_tokens": 1024,
+            }
+
+            response = requests.post(
+                self.api_url,
+                headers=headers,
+                json=payload,
+                timeout=self.timeout
+            )
+
+            if response.status_code != 200:
+                error_data = response.json()
+                error_msg = error_data.get('error', {}).get('message', 'API request failed')
+                return {
+                    'success': False,
+                    'error': f'Failed to generate report: {error_msg}'
+                }
+
+            result = response.json()
+
+            # Extract text from Groq response
+            report_text = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+
+            if not report_text:
+                return {
+                    'success': False,
+                    'error': 'No report generated. Please try again.'
+                }
 
             # Parse sections from the generated report
             sections = self._parse_report_sections(report_text)
@@ -130,6 +156,11 @@ class AIProgressReportService:
                 'performance_data': performance_data,  # Include for context
             }
 
+        except requests.exceptions.Timeout:
+            return {
+                'success': False,
+                'error': 'AI report generation timed out. Please try again or check your internet connection.'
+            }
         except Exception as e:
             return {
                 'success': False,

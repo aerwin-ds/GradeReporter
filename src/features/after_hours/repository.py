@@ -1,26 +1,67 @@
 from __future__ import annotations
 import sqlite3
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Optional, List, Tuple
+from datetime import datetime, timedelta
+import pytz # type: ignore
+import pandas as pd # type: ignore
+import uuid
+import smtplib
+from email.message import EmailMessage
+from typing import Optional, Tuple
 
+# ------------------ DATABASE SETUP -----------------------------
+DB_PATH = "after_hours.db"
 
-@dataclass
-class AfterHoursRequest:
-    request_id: int
-    requester_id: int
-    requester_role: str
-    teacher_id: int
-    student_id: Optional[int]
-    question: str
-    submitted_at: str
-    status: str
-    teacher_response: Optional[str]
-    response_time: Optional[str]
+CREATE_SQL = """
+PRAGMA foreign_keys = ON;
 
+CREATE TABLE IF NOT EXISTS teachers (
+    teacher_id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT,
+    timezone TEXT NOT NULL
+);
 
-class AfterHoursRepository:
-    def __init__(self, db_path: str) -> None:
+CREATE TABLE IF NOT EXISTS availability (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    teacher_id TEXT NOT NULL,
+    weekday INTEGER NOT NULL,
+    start_hm TEXT NOT NULL,
+    end_hm TEXT NOT NULL,
+    FOREIGN KEY(teacher_id) REFERENCES teachers(teacher_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS tickets (
+    ticket_id TEXT PRIMARY KEY,
+    teacher_id TEXT NOT NULL,
+    submitter_name TEXT,
+    submitter_email TEXT,
+    submitter_id TEXT,
+    question TEXT,
+    submitted_at_utc TEXT,
+    status TEXT,
+    scheduled_slot_utc TEXT,
+    ticket_notes TEXT,
+    FOREIGN KEY(teacher_id) REFERENCES teachers(teacher_id) ON DELETE CASCADE
+);
+"""
+
+# ------------------ UTILITY HELPERS ----------------------------
+def _now_utc():
+    return datetime.utcnow().replace(tzinfo=pytz.UTC)
+
+def _parse_hm(hm: str):
+    hh, mm = hm.split(":")
+    return int(hh), int(mm)
+
+def _localize(naive_dt: datetime, tzname: str):
+    tz = pytz.timezone(tzname)
+    if naive_dt.tzinfo is None:
+        return tz.localize(naive_dt)
+    return naive_dt.astimezone(tz)
+
+# ------------------ CORE SYSTEM -------------------------------
+class AfterHoursSystem:
+    def __init__(self, db_path: str = DB_PATH):
         self.db_path = db_path
 
     def _connect(self):
@@ -134,16 +175,5 @@ class AfterHoursRepository:
         """, (teacher_id,))
         rows = cur.fetchall()
         conn.close()
-        return [self._to_request(r) for r in rows]
+        return df
 
-    def update_response(self, request_id: int, response: str, status: str):
-        conn = self._connect()
-        cur = conn.cursor()
-        response_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        cur.execute("""
-            UPDATE AfterHoursRequests
-            SET teacher_response = ?, status = ?, response_time = ?
-            WHERE request_id = ?
-        """, (response, status, response_time, request_id))
-        conn.commit()
-        conn.close()

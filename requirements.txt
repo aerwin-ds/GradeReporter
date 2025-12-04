@@ -11,10 +11,8 @@ bcrypt>=4.0.0
 pytz>=2023.3
 
 # AI/LLM Integration
-google-auth>=2.0.0
-langchain>=1.0.0
-langchain-google-genai>=3.1.0
-langchain-core>=1.0.0
+huggingface-hub>=0.16.0
+requests>=2.27.0
 
 # Development & Testing
 faker>=20.0.0

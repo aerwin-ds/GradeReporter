@@ -152,8 +152,8 @@ def _render_student_schedule(user: dict) -> None:
             {
                 "Class": r.get("course_name"),
                 "Assignment / Exam": r.get("assignment_name"),
-                "Due Date": r.get("due_date"),
-                "Grade": r.get("grade"),
+                "Due Date": r.get("due_date") or "",
+                "Grade": r.get("grade") or "",
             }
             for r in filtered
         ]
@@ -185,8 +185,8 @@ def _render_parent_schedule(user: dict) -> None:
                 "Student": r.get("student_name"),
                 "Class": r.get("course_name"),
                 "Assignment / Exam": r.get("assignment_name"),
-                "Due Date": r.get("due_date"),
-                "Grade": r.get("grade"),
+                "Due Date": r.get("due_date") or "",
+                "Grade": r.get("grade") or "",
             }
             for r in filtered
         ]
@@ -217,8 +217,8 @@ def _render_teacher_schedule(user: dict) -> None:
             {
                 "Class": r.get("course_name"),
                 "Assignment / Exam": r.get("assignment_name"),
-                "Due Date": r.get("due_date"),
-                "Grade": r.get("grade"),
+                "Due Date": r.get("due_date") or "",
+                "Grade": r.get("grade") or "",
             }
             for r in filtered
         ]

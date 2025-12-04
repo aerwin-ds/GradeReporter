@@ -9,7 +9,68 @@ This wraps the repository and enforces basic business rules:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Literal, Optional
+import os
+from dataclasses import dataclass
+from datetime import datetime, time
+from typing import Any, Dict, List, Optional, Protocol, Literal
+
+try:
+    # Python 3.9+ standard timezone support
+    from zoneinfo import ZoneInfo
+except ImportError:  # pragma: no cover - for very old Python versions
+    ZoneInfo = None  # type: ignore[misc]
+
+
+StatusType = Literal["open", "in_progress", "resolved", "cancelled"]
+
+
+# ---------------------------------------------------------------------------
+# Config
+# ---------------------------------------------------------------------------
+
+@dataclass
+class AfterHoursConfig:
+    """Configuration for After-Hours Connect."""
+
+    feature_enabled: bool
+    start_time: time
+    end_time: time
+    timezone: str
+
+    @classmethod
+    def from_env(cls) -> "AfterHoursConfig":
+        """Load configuration from environment variables."""
+        start_str = os.getenv("AFTER_HOURS_START", "17:00")  # 5 PM
+        end_str = os.getenv("AFTER_HOURS_END", "21:00")      # 9 PM
+        tz = os.getenv("AFTER_HOURS_TIMEZONE", "America/Chicago")
+        enabled = os.getenv("FEATURE_AFTER_HOURS", "true").lower() == "true"
+
+        def parse_hh_mm(value: str) -> time:
+            hour, minute = value.split(":")
+            return time(hour=int(hour), minute=int(minute))
+
+        return cls(
+            feature_enabled=enabled,
+            start_time=parse_hh_mm(start_str),
+            end_time=parse_hh_mm(end_str),
+            timezone=tz,
+        )
+
+    def is_within_window(self, dt: Optional[datetime] = None) -> bool:
+        """
+        Check whether a given datetime is within the configured
+        after-hours window. Defaults to "now" in the configured timezone.
+        """
+        if not self.feature_enabled:
+            return False
+
+        if dt is None:
+            if ZoneInfo is not None:
+                dt = datetime.now(ZoneInfo(self.timezone))
+            else:
+                dt = datetime.now()
+
+        current_time = dt.time()
 
 from .repository import AfterHoursRepository, AfterHoursRequest
 
