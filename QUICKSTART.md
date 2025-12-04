@@ -20,9 +20,11 @@ uv pip install -r requirements.txt
 # Copy environment file
 cp .env.example .env
 
-# ⚠️ IMPORTANT: Add Google API Key for AI Progress Reports
-# Edit .env and add this line:
-# GOOGLE_API_KEY=AIzaSyD_E490uOyT2_Tiy5x5_i43M0E8F7xa5Ww
+# ✨ AI Progress Reports: Uses FREE Groq API with Llama 3.3 70B!
+# 1. Go to https://console.groq.com/keys
+# 2. Create a new API key
+# 3. Copy the key
+# 4. Edit .env and add: GROQ_API_TOKEN=your_key_here
 ```
 
 ## 2. Create Test Database (1 minute)
@@ -87,11 +89,10 @@ The test database includes:
 ## Troubleshooting
 
 **Problem**: AI Progress Reports not working
-- Ensure `GOOGLE_API_KEY` is set in `.env` file
-- Add this line to your `.env`:
-  ```
-  GOOGLE_API_KEY=AIzaSyD_E490uOyT2_Tiy5x5_i43M0E8F7xa5Ww
-  ```
+- Ensure `GROQ_API_TOKEN` is set in `.env` file
+- Get a free token at: https://console.groq.com/keys (no credit card required!)
+- Each team member should create their own token
+- Reports are cached after first generation to reduce API calls
 
 **Problem**: Import errors
 ```bash

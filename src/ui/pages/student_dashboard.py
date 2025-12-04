@@ -16,26 +16,6 @@ def show_student_dashboard():
 
     st.markdown(f'<h1 class="main-header">Welcome, {user["name"]}!</h1>', unsafe_allow_html=True)
 
-    # Show low grade alerts if any
-    from src.features.low_grade_alerts_guidance.service import LowGradeAlertService
-    alert_service = LowGradeAlertService()
-    student_id = user.get("student_id")
-
-    if student_id:
-        alerts = alert_service.get_student_alerts(student_id)
-        if alerts:
-            st.warning(f"You have {len(alerts)} grade alert(s) that need your attention!")
-            for alert in alerts:
-                with st.container(border=True):
-                    col1, col2 = st.columns([0.85, 0.15])
-                    with col1:
-                        st.markdown(f"**{alert['alert_type'].replace('_', ' ').title()}** in {alert['course_name']} ({alert['current_grade']:.1f}%)")
-                        st.caption(alert['alert_message'][:100] + "...")
-                    with col2:
-                        if st.button("View", key=f"view_alert_{alert['alert_id']}"):
-                            st.session_state.current_page = 'low_grade_alerts'
-                            st.rerun()
-
     # Get student's grades using RBAC filtering
     grades_df = RBACFilter.get_authorized_grades()
     courses_df = RBACFilter.get_authorized_courses()
@@ -166,3 +146,5 @@ def show_student_dashboard():
                     st.write("No grades yet for this course.")
     else:
         st.info("Not enrolled in any courses yet.")
+
+    st.markdown("---")

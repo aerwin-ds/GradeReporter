@@ -22,7 +22,7 @@ class ScheduleRepository:
 
     def get_student_schedule(self, student_id: int) -> List[Dict]:
         """
-        All assignments/exams with due dates for a given student.
+        All assignments/exams with dates for a given student.
         """
         query = """
             SELECT
@@ -33,14 +33,13 @@ class ScheduleRepository:
             FROM Grades g
             JOIN Courses c ON c.course_id = g.course_id
             WHERE g.student_id = ?
-              AND g.due_date IS NOT NULL
-            ORDER BY date(g.due_date)
+            ORDER BY g.due_date
         """
         return self._fetch(query, (student_id,))
 
     def get_parent_schedule(self, parent_id: int) -> List[Dict]:
         """
-        All assignments/exams with due dates for all children of a parent.
+        All assignments/exams with dates for all children of a parent.
         """
         query = """
             SELECT
@@ -55,14 +54,13 @@ class ScheduleRepository:
             JOIN Grades g ON g.student_id = s.student_id
             JOIN Courses c ON c.course_id = g.course_id
             WHERE ps.parent_id = ?
-              AND g.due_date IS NOT NULL
-            ORDER BY date(g.due_date)
+            ORDER BY g.due_date
         """
         return self._fetch(query, (parent_id,))
 
     def get_teacher_schedule(self, teacher_id: int) -> List[Dict]:
         """
-        All assignments/exams with due dates for courses taught by a teacher.
+        All assignments/exams with dates for courses taught by a teacher.
         """
         query = """
             SELECT
@@ -73,7 +71,6 @@ class ScheduleRepository:
             FROM Courses c
             JOIN Grades g ON g.course_id = c.course_id
             WHERE c.teacher_id = ?
-              AND g.due_date IS NOT NULL
-            ORDER BY date(g.due_date)
+            ORDER BY g.due_date
         """
         return self._fetch(query, (teacher_id,))

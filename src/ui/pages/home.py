@@ -79,6 +79,11 @@ def show_home_page():
         from src.features.schedule_area.ui import show_schedule_page
         show_schedule_page()
 
+    # -------- AFTER-HOURS --------
+    elif current_page == "after_hours":
+        from src.ui.pages.after_hours import show_after_hours_page
+        show_after_hours_page()
+
     # -------- FALLBACK --------
     else:
         st.info(f"Page '{current_page}' is under construction.")

@@ -3,7 +3,7 @@ Main Streamlit application entry point for GradeReporter.
 """
 import streamlit as st
 from src.core.session import session
-from src.ui.components.navigation import render_navigation, get_pages_for_role
+from src.ui.components.navigation import render_navigation, get_pages_for_role, get_current_page
 from config.settings import APP_NAME
 
 
@@ -56,9 +56,15 @@ def main():
         # Show navigation and main content
         render_navigation()
 
-        # Show home page
-        from src.ui.pages.home import show_home_page
-        show_home_page()
+        current_page = get_current_page()
+
+        if current_page == "home":
+            from src.ui.pages.home import show_home_page
+            show_home_page()
+
+        elif current_page == "after_hours":
+            from src.ui.pages.after_hours import show_after_hours_page
+            show_after_hours_page()
 
 
 if __name__ == "__main__":
